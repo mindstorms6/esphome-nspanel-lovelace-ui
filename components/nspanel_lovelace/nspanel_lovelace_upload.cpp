@@ -88,13 +88,18 @@ int NSPanelLovelace::upload_by_chunks_(HTTPClient *http, const std::string &url,
     this->content_length_ -= write_len;
     ESP_LOGD(TAG, "Uploaded %0.1f %%, remaining %d B",
              100.0 * (this->tft_size_ - this->content_length_) / this->tft_size_, this->content_length_);
-
+    App.feed_wdt();
     if (!this->upload_first_chunk_sent_) {
       this->upload_first_chunk_sent_ = true;
       delay(500);  // NOLINT
+      App.feed_wdt();
     }
-
+    ESP_LOGD(TAG, "Doing recv_ret");
+    App.feed_wdt();
+    
     this->recv_ret_string_(recv_string, 5000, true);
+    ESP_LOGD(TAG, "recv_ret done");
+    App.feed_wdt();
     if (recv_string[0] != 0x05) { // 0x05 == "ok"
       ESP_LOGD(TAG, "recv_string [%s]",
                format_hex_pretty(reinterpret_cast<const uint8_t *>(recv_string.data()), recv_string.size()).c_str());
