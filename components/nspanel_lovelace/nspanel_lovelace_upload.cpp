@@ -67,6 +67,7 @@ int NSPanelLovelace::upload_by_chunks_(HTTPClient *http, const std::string &url,
 
   // fetch next segment from HTTP stream
   while (fetched < range) {
+    App.feed_wdt();
     size = http->getStreamPtr()->available();
     if (!size) {
       App.feed_wdt();
@@ -103,22 +104,29 @@ int NSPanelLovelace::upload_by_chunks_(HTTPClient *http, const std::string &url,
     if (recv_string[0] != 0x05) { // 0x05 == "ok"
       ESP_LOGD(TAG, "recv_string [%s]",
                format_hex_pretty(reinterpret_cast<const uint8_t *>(recv_string.data()), recv_string.size()).c_str());
+    } else {
+       ESP_LOGD(TAG, "recv_string OK");
     }
 
     // handle partial upload request
     if (recv_string[0] == 0x08 && recv_string.size() == 5) {
+      ESP_LOGD(TAG, "Handling partial");
       uint32_t result = 0;
       for (int j = 0; j < 4; ++j) {
         result += static_cast<uint8_t>(recv_string[j + 1]) << (8 * j);
+        App.feed_wdt();
       }
       if (result > 0) {
         ESP_LOGD(TAG, "Nextion reported new range %d", result);
         this->content_length_ = this->tft_size_ - result;
+        App.feed_wdt();
         return result;
       }
     }
-
+    ESP_LOGD(TAG, "Clearning");
+    App.feed_wdt();
     recv_string.clear();
+    App.feed_wdt();
   }
   return range_end + 1;
 }
